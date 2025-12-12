@@ -34,49 +34,68 @@ def read_books(
     db: Session = Depends(get_db),
     page: int = Query(1, ge=1, description="페이지 번호"),
     size: int = Query(10, ge=1, le=100, description="페이지 크기"),
-    keyword: Optional[str] = Query(None, description="검색어"),
-    sort_by: Optional[str] = Query("created_at", description="정렬 기준"),
-    sort_desc: bool = Query(True, description="내림차순 여부")
+    # [수정] 정렬 규격: field,ASC|DESC
+    sort: str = Query("created_at,desc", description="정렬: field,asc|desc (예: price,asc)"),
+    # [수정] 검색 필터 1: 통합 검색
+    keyword: Optional[str] = Query(None, description="검색어 (제목, 저자)"),
+    # [추가] 검색 필터 2: 카테고리 (최소 2개 조건 만족용)
+    category: Optional[str] = Query(None, description="카테고리 필터")
 ):
     query = db.query(Book)
     
-    # 검색 필터
+    # 1. 필터링 (Where)
     if keyword:
         search = f"%{keyword}%"
         query = query.filter(
             or_(
                 Book.title.like(search),
-                Book.authors.like(search),
-                Book.categories.like(search)
+                Book.authors.like(search)
             )
         )
     
-    # 정렬 조건
-    if sort_by == "price":
-        order_col = Book.price
-    elif sort_by == "title":
-        order_col = Book.title
+    if category:
+        query = query.filter(Book.categories.like(f"%{category}%"))
+    
+    # 2. 정렬 (Sorting) - "price,desc" 파싱
+    try:
+        sort_field, sort_dir = sort.split(",")
+        sort_field = sort_field.strip()
+        sort_dir = sort_dir.strip().lower()
+    except ValueError:
+        # 포맷이 안 맞으면 기본값 적용
+        sort_field = "created_at"
+        sort_dir = "desc"
+
+    # DB 컬럼 매핑 (보안상 허용된 컬럼만 정렬 가능하게 함)
+    allowed_sort_fields = {
+        "price": Book.price,
+        "title": Book.title,
+        "created_at": Book.created_at,
+        "id": Book.id
+    }
+    
+    target_column = allowed_sort_fields.get(sort_field, Book.created_at)
+    
+    if sort_dir == "asc":
+        query = query.order_by(asc(target_column))
     else:
-        order_col = Book.created_at
+        query = query.order_by(desc(target_column))
         
-    if sort_desc:
-        query = query.order_by(order_col.desc())
-    else:
-        query = query.order_by(order_col.asc())
-        
-    # 페이지네이션 계산
-    total_count = query.count()
-    total_pages = ceil(total_count / size)
+    # 3. 페이지네이션 (Pagination)
+    total_elements = query.count()
+    total_pages = ceil(total_elements / size)
     
     offset = (page - 1) * size
     books = query.offset(offset).limit(size).all()
     
-    # [중요] 이 return 문이 꼭 있어야 하고, 들여쓰기가 def read_books와 맞아야 합니다!
+    # 4. 응답 생성 (규격 맞춤)
     return {
-        "total_count": total_count,
-        "current_page": page,
-        "total_pages": total_pages,
-        "books": books
+        "content": books,
+        "page": page,
+        "size": size,
+        "totalElements": total_elements,
+        "totalPages": total_pages,
+        "sort": sort # 요청받은 정렬 문자열 그대로 반환
     }
 
 # 3. 도서 상세 조회

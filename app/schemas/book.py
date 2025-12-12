@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import date, datetime
 
 # 공통 필드
 class BookBase(BaseModel):
@@ -31,17 +31,27 @@ class BookUpdate(BaseModel):
     # ISBN은 수정 불가로 설정
 
 # 응답 (Response)
-class BookResponse(BookBase):
+class BookResponse(BaseModel):
     id: int
+    title: str
+    description: Optional[str] = None
+    authors: Optional[str] = None
+    publisher: Optional[str] = None
+    publication_date: Optional[date] = None
+    price: int
+    stock: int
+    categories: Optional[str] = None
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime
 
     class Config:
         from_attributes = True
 
 # 목록 조회 응답 (List)
 class BookListResponse(BaseModel):
-    total_count: int
-    current_page: int
-    total_pages: int
-    books: List[BookResponse]
+    content: List[BookResponse]  # books -> content
+    page: int                    # current_page -> page
+    size: int
+    totalElements: int           # total_count -> totalElements
+    totalPages: int              # total_pages -> totalPages
+    sort: str                    # 정렬 정보 추가
