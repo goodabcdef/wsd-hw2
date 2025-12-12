@@ -54,8 +54,8 @@ FastAPI 프레임워크를 기반으로 구축되었으며, 사용자 인증, �
 
 ```bash
 # Clone
-git clone https://github.com/[본인아이디]/jcloud-bookstore.git
-cd jcloud-bookstore
+git clone https://github.com/goodabcdef/wsd-hw2.git
+cd wsd-hw2
 
 # 가상환경 생성 (권장)
 python3 -m venv venv
