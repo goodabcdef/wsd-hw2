@@ -1,0 +1,37 @@
+# 1. 가상환경 (용량이 크고 로컬 의존적이므로 제외)
+venv/
+env/
+.venv/
+
+# 2. 환경변수 및 비밀키 (보안상 절대 금지)
+.env
+.env.*
+! .env.example
+
+# 3. Python 컴파일 파일 및 캐시 (자동 생성되므로 제외)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 4. 테스트 관련 캐시 (pytest 실행 시 자동 생성)
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 5. 로그 파일 (서버 실행 로그 등)
+*.log
+nohup.out
+
+# 6. IDE 설정 파일 (VSCode, PyCharm 등 개인 설정 제외)
+.idea/
+.vscode/
+*.swp
+
+# 7. OS 자동 생성 파일 (Mac/Windows)
+.DS_Store
+Thumbs.db
+
+# 8. 배포/패키징 관련 (혹시 나중에 패키징 할 경우)
+dist/
+build/
+*.egg-info/
